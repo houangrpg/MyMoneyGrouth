@@ -15,6 +15,7 @@ function App() {
   // UI 過濾與分頁狀態
   const [query, setQuery] = useState('')
   const [actionFilter, setActionFilter] = useState('all') // all | buy | hold | sell
+  const [viewMode, setViewMode] = useState('watchlist') // watchlist | all
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const [holdings, setHoldings] = useState(getHoldings())
@@ -146,6 +147,23 @@ function App() {
         {!loading && stockData && (
           <>
             <PortfolioSummary stocks={stockData.stocks} holdings={holdings} />
+            
+            {/* 新增分頁切換 */}
+            <div className="view-mode-tabs">
+              <button 
+                className={`tab ${viewMode === 'watchlist' ? 'active' : ''}`}
+                onClick={() => { setViewMode('watchlist'); setPage(1) }}
+              >
+                📌 關注清單
+              </button>
+              <button 
+                className={`tab ${viewMode === 'all' ? 'active' : ''}`}
+                onClick={() => { setViewMode('all'); setPage(1) }}
+              >
+                📊 全部股票
+              </button>
+            </div>
+            
             <Filters
               query={query}
               setQuery={(v) => { setQuery(v); setPage(1) }}
@@ -159,6 +177,7 @@ function App() {
               stocks={stockData.stocks}
               query={query}
               actionFilter={actionFilter}
+              viewMode={viewMode}
               page={page}
               pageSize={pageSize}
               onUpdate={refreshHoldings}

@@ -7,19 +7,20 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-  "test": "vitest --exclude \"tests/e2e/**\" --passWithNoTests",
+    "test": "vitest --exclude \"tests/e2e/**\" --passWithNoTests",
     "test:e2e": "playwright test",
     "update:data:py": "python3 scripts/update_data.py",
     "update:data:light": "python3 scripts/update_data_light.py"
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "recharts": "^3.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.40.1",
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.0.8",
-    "vitest": "^1.0.4",
-    "@playwright/test": "^1.40.1"
+    "vitest": "^1.0.4"
   }
 }

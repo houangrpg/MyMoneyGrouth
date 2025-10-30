@@ -4,7 +4,7 @@ import StockDetailModal from './StockDetailModal'
 import { isWatched } from '../utils/storage'
 import { fetchLiveStock } from '../utils/liveStock'
 
-function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
+function StockList({ stocks, query, actionFilter, viewMode = 'watchlist', page, pageSize, onUpdate }) {
   const [, setRefresh] = useState(0)
   const [liveStocks, setLiveStocks] = useState([]) // 即時查詢的股票
   const [loadingLive, setLoadingLive] = useState(false)
@@ -15,6 +15,40 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
     setRefresh((r) => r + 1)
     if (onUpdate) onUpdate()
   }
+
+  // 頁面載入時自動更新關注股票的即時資料
+  useEffect(() => {
+    const refreshWatchedStocks = async () => {
+      if (!stocks || stocks.length === 0) return
+      
+      // 取得所有關注的股票
+      const watchedSymbols = stocks.filter(s => isWatched(s.symbol)).map(s => s.symbol)
+      if (watchedSymbols.length === 0) return
+
+      console.log('🔄 自動更新關注股票:', watchedSymbols)
+      
+      // 逐個更新關注股票（避免同時發送太多請求）
+      for (const symbol of watchedSymbols) {
+        try {
+          const liveStock = await fetchLiveStock(symbol)
+          // 更新到原始 stocks 陣列中（這會觸發父元件重新渲染）
+          const index = stocks.findIndex(s => s.symbol === symbol)
+          if (index !== -1 && liveStock) {
+            stocks[index] = { ...stocks[index], ...liveStock }
+          }
+        } catch (error) {
+          console.warn(`更新 ${symbol} 失敗:`, error.message)
+        }
+        // 每次請求間隔 500ms 避免被限流
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      
+      setRefresh((r) => r + 1) // 觸發重新渲染
+    }
+
+    // 只在首次載入和重整頁面時執行
+    refreshWatchedStocks()
+  }, []) // 空依賴陣列，只執行一次
 
   if (!stocks || stocks.length === 0) {
     return (
@@ -41,9 +75,15 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
     return s.recommendation?.action === actionFilter
   }
 
+  const byViewMode = (s) => {
+    if (viewMode === 'all') return true
+    if (viewMode === 'watchlist') return isWatched(s.symbol)
+    return true
+  }
+
   // 排序：關注優先 > 建議類型（買>持>賣）> 漲跌幅 > 成交量
   const actionOrder = { buy: 1, hold: 2, sell: 3 }
-  const allFiltered = stocks.filter((s) => byQuery(s) && byAction(s))
+  const allFiltered = stocks.filter((s) => byQuery(s) && byAction(s) && byViewMode(s))
   const allSorted = allFiltered.sort((a, b) => {
     // 優先：關注股票在前
     const aWatched = isWatched(a.symbol) ? 0 : 1

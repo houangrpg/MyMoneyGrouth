@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { formatNumber, formatPercent } from '../utils/formatter'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
 function StockDetailModal({ stock, onClose }) {
   const [activeTab, setActiveTab] = useState('analysis') // analysis | backtest | news
@@ -32,9 +33,9 @@ function StockDetailModal({ stock, onClose }) {
 
   const loadChartData = async () => {
     try {
-      // 使用 Yahoo Finance Chart API 取得歷史資料
+      // 使用 Yahoo Finance Chart API 取得歷史資料（改用 6 個月確保資料充足）
       const symbol = stock.symbol
-      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=3mo`)
+      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=6mo`)
       if (!response.ok) throw new Error('無法載入圖表資料')
       
       const data = await response.json()
@@ -58,9 +59,9 @@ function StockDetailModal({ stock, onClose }) {
 
   const loadBacktestData = async () => {
     try {
-      // 簡易回測：模擬過去 3 個月依照策略買賣的績效
+      // 簡易回測：模擬過去 6 個月依照策略買賣的績效
       const symbol = stock.symbol
-      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=3mo`)
+      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=6mo`)
       if (!response.ok) throw new Error('無法載入回測資料')
       
       const data = await response.json()
@@ -70,8 +71,9 @@ function StockDetailModal({ stock, onClose }) {
       const quotes = result.indicators?.quote?.[0] || {}
       const closes = (quotes.close || []).filter(c => c != null)
       
-      if (closes.length < 30) {
-        setBacktestResult({ error: '資料不足，無法進行回測' })
+      // 需要至少 25 天資料才能計算 SMA(20) 並進行回測
+      if (closes.length < 25) {
+        setBacktestResult({ error: '資料不足，無法進行回測（需至少 25 個交易日）' })
         return
       }
 
@@ -247,17 +249,49 @@ function StockDetailModal({ stock, onClose }) {
 
               {chartData && (
                 <div className="chart-section">
-                  <h3>近三個月走勢</h3>
-                  <div className="simple-chart">
-                    {/* 簡易文字圖表（實際可用 Chart.js 或 Recharts） */}
-                    <div className="chart-stats">
-                      <div>最高：${formatNumber(Math.max(...chartData.highs.filter(h => h)))}</div>
-                      <div>最低：${formatNumber(Math.min(...chartData.lows.filter(l => l)))}</div>
-                      <div>均量：{formatNumber(chartData.volumes.reduce((a,b) => a+(b||0), 0) / chartData.volumes.length)}</div>
-                    </div>
-                    <p className="chart-placeholder">
-                      📈 圖表功能開發中（可整合 TradingView Widget 或 Chart.js）
-                    </p>
+                  <h3>近六個月走勢</h3>
+                  <div className="chart-stats">
+                    <div>最高：${formatNumber(Math.max(...chartData.highs.filter(h => h)))}</div>
+                    <div>最低：${formatNumber(Math.min(...chartData.lows.filter(l => l)))}</div>
+                    <div>均量：{formatNumber(chartData.volumes.reduce((a,b) => a+(b||0), 0) / chartData.volumes.length)}</div>
+                  </div>
+                  
+                  {/* 價格走勢圖 */}
+                  <div style={{ marginTop: '20px' }}>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={chartData.dates.map((date, i) => ({
+                        date: date.slice(5), // 只顯示月/日
+                        價格: chartData.closes[i],
+                        'SMA(5)': i >= 4 ? chartData.closes.slice(i-4, i+1).reduce((a,b) => a+b, 0) / 5 : null,
+                        'SMA(20)': i >= 19 ? chartData.closes.slice(i-19, i+1).reduce((a,b) => a+b, 0) / 20 : null
+                      })).filter(d => d.價格)}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
+                        <YAxis domain={['dataMin - 5', 'dataMax + 5']} tick={{ fontSize: 12 }} />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="價格" stroke="#8884d8" strokeWidth={2} dot={false} />
+                        <Line type="monotone" dataKey="SMA(5)" stroke="#82ca9d" strokeWidth={1.5} dot={false} />
+                        <Line type="monotone" dataKey="SMA(20)" stroke="#ffc658" strokeWidth={1.5} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* 成交量圖 */}
+                  <div style={{ marginTop: '20px' }}>
+                    <h4 style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>成交量</h4>
+                    <ResponsiveContainer width="100%" height={150}>
+                      <BarChart data={chartData.dates.map((date, i) => ({
+                        date: date.slice(5),
+                        成交量: Math.round(chartData.volumes[i] / 1000) // 轉為千股
+                      })).filter(d => d.成交量)}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
+                        <YAxis tick={{ fontSize: 12 }} />
+                        <Tooltip formatter={(value) => `${formatNumber(value * 1000)} 股`} />
+                        <Bar dataKey="成交量" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               )}
@@ -270,7 +304,7 @@ function StockDetailModal({ stock, onClose }) {
                 <div className="error-msg">{backtestResult.error}</div>
               ) : (
                 <>
-                  <h3>回測績效（近 3 個月）</h3>
+                  <h3>回測績效（近 6 個月）</h3>
                   <div className="backtest-summary">
                     <div className="stat-card">
                       <label>初始資金</label>
