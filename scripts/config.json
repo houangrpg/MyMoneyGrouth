@@ -1,17 +1,18 @@
 {
   "watchlist": [
-    "5478.TW",
-    "6547.TW",
-    "6580.TW",
+    "5478.TWO",
+    "6547.TWO",
+    "6580.TWO",
     "6885.TW",
-    "6580.TW",
     "00981A.TW",
     "0050.TW",
     "0052.TW",
-    "2330.TW"
+    "2330.TW",
+    "2454.TW",
+    "2412.TW"
   ],
   "universe": {
-    "enabled": true,
+    "enabled": false,
     "market": "TW",
     "category": "all",
     "includeOTC": true,
