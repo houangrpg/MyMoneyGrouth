@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2025-10-30T15:21:31.503739",
+  "updatedAt": "2025-10-30T15:53:10.809011",
   "stocks": [
     {
-      "symbol": "5478O",
+      "symbol": "5478.TWO",
       "name": "智冠",
       "price": 102.0,
       "change": -1.0,
@@ -15,7 +15,7 @@
       }
     },
     {
-      "symbol": "6547O",
+      "symbol": "6547.TWO",
       "name": "高端疫苗",
       "price": 35.05,
       "change": -0.75,
@@ -28,7 +28,7 @@
       }
     },
     {
-      "symbol": "6580O",
+      "symbol": "6580.TWO",
       "name": "6580",
       "price": 23.55,
       "change": -0.85,
@@ -41,7 +41,7 @@
       }
     },
     {
-      "symbol": "6885",
+      "symbol": "6885.TW",
       "name": "全福生技",
       "price": 30.5,
       "change": 0.45,
@@ -54,7 +54,7 @@
       }
     },
     {
-      "symbol": "00981A",
+      "symbol": "00981A.TW",
       "name": "00981A",
       "price": 15.45,
       "change": 0.13,
@@ -67,7 +67,7 @@
       }
     },
     {
-      "symbol": "0050",
+      "symbol": "0050.TW",
       "name": "元大台灣50",
       "price": 64.4,
       "change": 0.0,
@@ -80,7 +80,7 @@
       }
     },
     {
-      "symbol": "0052",
+      "symbol": "0052.TW",
       "name": "富邦科技",
       "price": 260.0,
       "change": 0.0,
@@ -93,7 +93,7 @@
       }
     },
     {
-      "symbol": "2330",
+      "symbol": "2330.TW",
       "name": "台積電",
       "price": 1505.0,
       "change": 0.0,
@@ -106,7 +106,7 @@
       }
     },
     {
-      "symbol": "2454",
+      "symbol": "2454.TW",
       "name": "聯發科",
       "price": 1310.0,
       "change": 10.0,
@@ -119,7 +119,7 @@
       }
     },
     {
-      "symbol": "2412",
+      "symbol": "2412.TW",
       "name": "中華電",
       "price": 131.5,
       "change": -0.5,

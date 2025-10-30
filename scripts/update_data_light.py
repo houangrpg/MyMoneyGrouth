@@ -285,8 +285,8 @@ def process_symbol(symbol: str, cfg, name_map=None):
         disp_name = symbol.split('.')[0]
 
     return {
-    'symbol': symbol.replace('.TW', '').replace('.TWO', ''),
-    'name': disp_name,
+        'symbol': symbol,  # 保留 .TW/.TWO 後綴，便於前端名稱對應
+        'name': disp_name,
         'price': round(close_price, 2),
         'change': round(change, 2),
         'changePercent': round(change_percent, 2),
@@ -368,6 +368,28 @@ def main():
     with open(HISTORY_DIR / f"{today}.json", 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
     print(f"📅 已儲存歷史快照至 {HISTORY_DIR / (today + '.json')}")
+
+    # 產出全市場名稱映射（public/names.json），供前端即時查詢使用
+    try:
+        full_name_map = {}
+        for mode, suffix in ((2, '.TW'), (4, '.TWO')):
+            rows = fetch_isin_rows(mode)
+            for r in rows:
+                if len(r) >= 1:
+                    parts = r[0].split()
+                    if not parts:
+                        continue
+                    code = parts[0]
+                    if not code.isdigit():
+                        continue
+                    cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
+                    full_name_map[f"{code}{suffix}"] = cname
+        names_path = Path(__file__).parent.parent / 'public' / 'names.json'
+        with open(names_path, 'w', encoding='utf-8') as nf:
+            json.dump(full_name_map, nf, ensure_ascii=False)
+        print(f"📝 已輸出名稱映射至 {names_path}（{len(full_name_map)} 筆）")
+    except Exception as e:
+        print(f"⚠️ 無法輸出名稱映射：{e}")
 
     print(f"\n🎉 完成！成功更新 {len(stocks)} 檔股票")
 

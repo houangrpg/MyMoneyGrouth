@@ -1,3 +1,28 @@
+// 懶載入並快取 names.json（symbol -> 中文名稱）
+let __namesMap = null
+let __namesMapPromise = null
+
+async function loadNamesMap() {
+  if (__namesMap) return __namesMap
+  if (!__namesMapPromise) {
+    __namesMapPromise = fetch('/names.json')
+      .then((res) => {
+        if (!res.ok) throw new Error('無法載入名稱映射')
+        return res.json()
+      })
+      .then((json) => {
+        __namesMap = json || {}
+        return __namesMap
+      })
+      .catch((err) => {
+        console.warn('載入 names.json 失敗，改用 Yahoo 名稱', err)
+        __namesMap = {}
+        return __namesMap
+      })
+  }
+  return __namesMapPromise
+}
+
 // 即時抓取單一股票資料
 export async function fetchLiveStock(symbol) {
   try {
@@ -89,9 +114,13 @@ export async function fetchLiveStock(symbol) {
       reason = `價格跌破20日均線，RSI ${rsi.toFixed(1)} 偏高，建議觀望或減碼`
     }
 
+    // 嘗試以 names.json 取得中文名稱
+    const namesMap = await loadNamesMap()
+    const mappedName = namesMap[fullSymbol]
+
     return {
       symbol: fullSymbol,
-      name: meta.longName || meta.shortName || fullSymbol,
+      name: mappedName || meta.longName || meta.shortName || fullSymbol,
       price: Math.round(closePrice * 100) / 100,
       change: Math.round(change * 100) / 100,
       changePercent: Math.round(changePercent * 100) / 100,
