@@ -669,7 +669,439 @@ body {
   }
 }
 
+/* Modal 樣式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.stock-price-inline {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.price-lg {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.change-lg {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.modal-close:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.modal-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.modal-tabs .tab {
+  flex: 1;
+  padding: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 3px solid transparent;
+}
+
+.modal-tabs .tab:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modal-tabs .tab.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+  background: white;
+}
+
+.modal-body {
+  padding: 2rem;
+  min-height: 300px;
+}
+
+.loading-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.spinner-sm {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 分析頁籤 */
+.analysis-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.recommendation-detail {
+  background: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.recommendation-detail h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.badge-lg {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.badge-lg.badge-buy {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-lg.badge-sell {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-lg.badge-hold {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.reason-lg {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.confidence-bar {
+  margin-top: 1rem;
+}
+
+.confidence-bar label {
+  display: block;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.confidence-bar .bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.confidence-bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%);
+  transition: width 0.3s;
+}
+
+.chart-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.chart-section h3 {
+  font-size: 1.125rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.chart-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.chart-placeholder {
+  text-align: center;
+  padding: 3rem;
+  color: #9ca3af;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+/* 回測頁籤 */
+.backtest-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.backtest-tab h3 {
+  font-size: 1.25rem;
+  color: #111827;
+}
+
+.backtest-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-card label {
+  display: block;
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.stat-card .value small {
+  font-size: 0.875rem;
+  margin-left: 0.25rem;
+}
+
+.trade-history {
+  margin-top: 1.5rem;
+}
+
+.trade-history h4 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  color: #374151;
+}
+
+.trade-history table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.trade-history th {
+  background: #f3f4f6;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #6b7280;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.trade-history td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.backtest-note {
+  background: #fef3c7;
+  border: 1px solid #fde047;
+  padding: 1rem;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.875rem;
+  margin-top: 1.5rem;
+}
+
+.error-msg {
+  text-align: center;
+  padding: 2rem;
+  color: #ef4444;
+}
+
+/* 新聞頁籤 */
+.news-tab h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  color: #111827;
+}
+
+.no-news {
+  text-align: center;
+  padding: 3rem;
+  color: #9ca3af;
+}
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.news-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: all 0.2s;
+}
+
+.news-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.news-item h4 {
+  margin-bottom: 0.75rem;
+}
+
+.news-item h4 a {
+  color: #111827;
+  text-decoration: none;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.news-item h4 a:hover {
+  color: #667eea;
+}
+
+.news-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.news-meta .source {
+  font-weight: 600;
+}
+
 /* 手機響應式 */
+@media (max-width: 768px) {
+  .modal-content {
+    max-height: 95vh;
+    margin: 0.5rem;
+  }
+
+  .modal-header {
+    flex-direction: column;
+  }
+
+  .modal-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .price-lg {
+    font-size: 1.5rem;
+  }
+
+  .change-lg {
+    font-size: 1rem;
+  }
+
+  .modal-tabs .tab {
+    font-size: 0.875rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .backtest-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chart-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
 @media (max-width: 639px) {
   .filters-row {
     grid-template-columns: 1fr;
@@ -690,5 +1122,9 @@ body {
   .btn-live-search {
     width: 100%;
     padding: 1rem;
+  }
+
+  .backtest-summary {
+    grid-template-columns: 1fr;
   }
 }

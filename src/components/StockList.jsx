@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import StockCard from './StockCard'
+import StockDetailModal from './StockDetailModal'
 import { isWatched } from '../utils/storage'
 import { fetchLiveStock } from '../utils/liveStock'
 
@@ -8,6 +9,7 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
   const [liveStocks, setLiveStocks] = useState([]) // 即時查詢的股票
   const [loadingLive, setLoadingLive] = useState(false)
   const [liveError, setLiveError] = useState(null)
+  const [selectedStock, setSelectedStock] = useState(null)
 
   const handleCardUpdate = () => {
     setRefresh((r) => r + 1)
@@ -131,6 +133,7 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
             key={stock.symbol} 
             stock={stock} 
             onUpdate={handleCardUpdate}
+            onShowDetail={setSelectedStock}
             isLive={stock.isLive}
           />
         ))}
@@ -143,6 +146,13 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
             : `顯示 ${start + 1}-${Math.min(end, total)} / ${total}${liveStocks.length > 0 ? ' (含即時查詢)' : ''}`
           }
         </div>
+      )}
+
+      {selectedStock && (
+        <StockDetailModal 
+          stock={selectedStock} 
+          onClose={() => setSelectedStock(null)} 
+        />
       )}
     </>
   )

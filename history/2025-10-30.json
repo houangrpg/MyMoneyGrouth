@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2025-10-30T16:30:44.019184",
+  "updatedAt": "2025-10-30T16:53:01.010151",
   "stocks": [
     {
       "symbol": "5478.TWO",
@@ -11,7 +11,8 @@
       "recommendation": {
         "action": "hold",
         "reason": "價格持穩於均線附近，靜待明確訊號",
-        "confidence": 0.55
+        "confidence": 0.52,
+        "signals": []
       }
     },
     {
@@ -23,8 +24,9 @@
       "volume": 1316167,
       "recommendation": {
         "action": "buy",
-        "reason": "RSI指標為21.1顯示超賣，有反彈機會",
-        "confidence": 0.65
+        "reason": "RSI 21.1 顯示超賣，有反彈機會",
+        "confidence": 0.63,
+        "signals": []
       }
     },
     {
@@ -36,8 +38,9 @@
       "volume": 58924,
       "recommendation": {
         "action": "buy",
-        "reason": "RSI指標為29.8顯示超賣，有反彈機會",
-        "confidence": 0.65
+        "reason": "RSI 29.8 顯示超賣，有反彈機會",
+        "confidence": 0.63,
+        "signals": []
       }
     },
     {
@@ -50,7 +53,8 @@
       "recommendation": {
         "action": "hold",
         "reason": "價格持穩於均線附近，靜待明確訊號",
-        "confidence": 0.55
+        "confidence": 0.52,
+        "signals": []
       }
     },
     {
@@ -62,8 +66,9 @@
       "volume": 81786955,
       "recommendation": {
         "action": "sell",
-        "reason": "RSI指標為74.8超買，建議獲利了結",
-        "confidence": 0.6
+        "reason": "RSI 74.8 超買，建議獲利了結",
+        "confidence": 0.58,
+        "signals": []
       }
     },
     {
@@ -76,7 +81,8 @@
       "recommendation": {
         "action": "hold",
         "reason": "均線呈多頭排列，價格穩健，建議續抱",
-        "confidence": 0.65
+        "confidence": 0.62,
+        "signals": []
       }
     },
     {
@@ -89,7 +95,8 @@
       "recommendation": {
         "action": "hold",
         "reason": "均線呈多頭排列，價格穩健，建議續抱",
-        "confidence": 0.65
+        "confidence": 0.62,
+        "signals": []
       }
     },
     {
@@ -100,9 +107,12 @@
       "changePercent": 0.0,
       "volume": 29255730,
       "recommendation": {
-        "action": "hold",
-        "reason": "均線呈多頭排列，價格穩健，建議續抱",
-        "confidence": 0.65
+        "action": "sell",
+        "reason": "MACD死亡交叉且RSI 66.1 偏高，趨勢轉弱建議減碼",
+        "confidence": 0.73,
+        "signals": [
+          "MACD死叉+RSI偏高"
+        ]
       }
     },
     {
@@ -113,9 +123,12 @@
       "changePercent": 0.77,
       "volume": 5409148,
       "recommendation": {
-        "action": "hold",
-        "reason": "價格持穩於均線附近，靜待明確訊號",
-        "confidence": 0.55
+        "action": "buy",
+        "reason": "MACD黃金交叉且RSI 44.2 偏低，趨勢轉強訊號明確",
+        "confidence": 0.76,
+        "signals": [
+          "MACD金叉+RSI偏低"
+        ]
       }
     },
     {
@@ -128,7 +141,8 @@
       "recommendation": {
         "action": "hold",
         "reason": "價格持穩於均線附近，靜待明確訊號",
-        "confidence": 0.55
+        "confidence": 0.52,
+        "signals": []
       }
     }
   ]

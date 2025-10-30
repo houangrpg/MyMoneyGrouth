@@ -241,39 +241,159 @@ def rsi(values, period=14):
     return 100 - (100 / (1 + rs))
 
 
-def recommend(sma_short, sma_long, rsi_val, cfg_ind):
+def macd(values, fast=12, slow=26, signal=9):
+    """計算 MACD (Moving Average Convergence Divergence)
+    回傳：(macd_line, signal_line, histogram)
+    """
+    arr = [v for v in values if v is not None]
+    if len(arr) < slow:
+        return None, None, None
+    
+    # EMA 計算
+    def ema(data, period):
+        multiplier = 2 / (period + 1)
+        ema_val = sum(data[:period]) / period
+        for price in data[period:]:
+            ema_val = (price - ema_val) * multiplier + ema_val
+        return ema_val
+    
+    ema_fast = ema(arr, fast)
+    ema_slow = ema(arr, slow)
+    macd_line = ema_fast - ema_slow
+    
+    # 計算信號線（MACD 的 9 日 EMA）
+    if len(arr) < slow + signal:
+        return macd_line, None, None
+    
+    # 簡化：使用最近的 MACD 值計算信號線
+    macd_values = []
+    for i in range(slow, len(arr)):
+        ema_f = ema(arr[:i+1], fast)
+        ema_s = ema(arr[:i+1], slow)
+        macd_values.append(ema_f - ema_s)
+    
+    signal_line = ema(macd_values, signal) if len(macd_values) >= signal else None
+    histogram = (macd_line - signal_line) if signal_line else None
+    
+    return macd_line, signal_line, histogram
+
+
+def detect_divergence(prices, rsi_values):
+    """偵測 RSI 背離
+    回傳：'bullish' (牛市背離), 'bearish' (熊市背離), None
+    """
+    if len(prices) < 20 or len(rsi_values) < 20:
+        return None
+    
+    recent_prices = prices[-20:]
+    recent_rsi = rsi_values[-20:]
+    
+    # 牛市背離：價格創新低但 RSI 未創新低
+    price_low_idx = recent_prices.index(min(recent_prices))
+    if price_low_idx > 10:  # 確保低點在近期
+        earlier_prices = recent_prices[:price_low_idx]
+        earlier_rsi = recent_rsi[:price_low_idx]
+        if earlier_prices and earlier_rsi:
+            if min(recent_prices) < min(earlier_prices) and min(recent_rsi) > min(earlier_rsi):
+                return 'bullish'
+    
+    # 熊市背離：價格創新高但 RSI 未創新高
+    price_high_idx = recent_prices.index(max(recent_prices))
+    if price_high_idx > 10:
+        earlier_prices = recent_prices[:price_high_idx]
+        earlier_rsi = recent_rsi[:price_high_idx]
+        if earlier_prices and earlier_rsi:
+            if max(recent_prices) > max(earlier_prices) and max(recent_rsi) < max(earlier_rsi):
+                return 'bearish'
+    
+    return None
+
+
+def recommend(sma5, sma20, sma200, rsi_val, macd_line, signal_line, histogram, volume_trend, divergence, cfg_ind):
+    """整合多指標的建議演算法
+    參數：
+    - sma5, sma20, sma200: 短中長期均線
+    - rsi_val: RSI 值
+    - macd_line, signal_line, histogram: MACD 指標
+    - volume_trend: 成交量趨勢 ('increasing', 'decreasing', 'neutral')
+    - divergence: 背離狀態 ('bullish', 'bearish', None)
+    """
     action = 'hold'
     reason = '價格持穩，建議續抱觀察'
     confidence = 0.50
-    if sma_short and sma_long and rsi_val:
-        if sma_short > sma_long and rsi_val < cfg_ind['rsi_oversold']:
-            action = 'buy'
-            reason = f"5日均線黃金交叉20日均線，RSI指標為{rsi_val:.1f}顯示超賣，建議逢低買進"
-            confidence = 0.75
-        elif sma_short < sma_long and rsi_val > cfg_ind['rsi_overbought']:
+    signals = []
+    
+    # === 策略 1: RSI + MA(200) 長期趨勢 + 短期超賣 ===
+    if sma200 and sma20 and sma20 > sma200 and rsi_val and rsi_val < 40:
+        signals.append('順勢超賣')
+        action = 'buy'
+        reason = f"價格位於200日均線多頭趨勢，RSI {rsi_val:.1f} 顯示短期超賣，順勢買入良機"
+        confidence = 0.78
+    
+    # === 策略 2: RSI + MACD 雙重確認 ===
+    if macd_line is not None and signal_line is not None and histogram is not None:
+        macd_golden_cross = histogram > 0 and macd_line > signal_line
+        macd_death_cross = histogram < 0 and macd_line < signal_line
+        
+        if macd_golden_cross and rsi_val and rsi_val < 50:
+            signals.append('MACD金叉+RSI偏低')
+            if action != 'buy' or confidence < 0.75:
+                action = 'buy'
+                reason = f"MACD黃金交叉且RSI {rsi_val:.1f} 偏低，趨勢轉強訊號明確"
+                confidence = 0.76
+        
+        if macd_death_cross and rsi_val and rsi_val > 50:
+            signals.append('MACD死叉+RSI偏高')
             action = 'sell'
-            reason = f"5日均線跌破20日均線，RSI指標為{rsi_val:.1f}超買，建議減碼"
-            confidence = 0.70
-        elif rsi_val < cfg_ind['rsi_oversold']:
-            action = 'buy'
-            reason = f"RSI指標為{rsi_val:.1f}顯示超賣，有反彈機會"
-            confidence = 0.65
-        elif rsi_val > cfg_ind['rsi_overbought']:
-            action = 'sell'
-            reason = f"RSI指標為{rsi_val:.1f}超買，建議獲利了結"
-            confidence = 0.60
-        elif sma_short > sma_long:
-            action = 'hold'
-            reason = '均線呈多頭排列，價格穩健，建議續抱'
-            confidence = 0.65
-        else:
-            action = 'hold'
-            reason = '價格持穩於均線附近，靜待明確訊號'
-            confidence = 0.55
+            reason = f"MACD死亡交叉且RSI {rsi_val:.1f} 偏高，趨勢轉弱建議減碼"
+            confidence = 0.73
+    
+    # === 策略 3: RSI + Volume 背離確認 ===
+    if divergence == 'bullish' and volume_trend == 'increasing':
+        signals.append('牛市背離+量增')
+        action = 'buy'
+        reason = f"RSI牛市背離且成交量放大，買盤進場趨勢反轉機率高 (RSI {rsi_val:.1f})"
+        confidence = 0.80
+    
+    if divergence == 'bearish' and (volume_trend == 'increasing' or volume_trend == 'decreasing'):
+        signals.append('熊市背離')
+        action = 'sell'
+        reason = f"RSI熊市背離，多頭動能減弱應留意 (RSI {rsi_val:.1f})"
+        confidence = 0.75
+    
+    # === 傳統策略作為備選 ===
+    if not signals:  # 無特殊訊號時使用傳統邏輯
+        if sma5 and sma20 and rsi_val:
+            if sma5 > sma20 and rsi_val < cfg_ind['rsi_oversold']:
+                action = 'buy'
+                reason = f"5日均線黃金交叉20日均線，RSI {rsi_val:.1f} 顯示超賣，建議逢低買進"
+                confidence = 0.72
+            elif sma5 < sma20 and rsi_val > cfg_ind['rsi_overbought']:
+                action = 'sell'
+                reason = f"5日均線跌破20日均線，RSI {rsi_val:.1f} 超買，建議減碼"
+                confidence = 0.68
+            elif rsi_val < cfg_ind['rsi_oversold']:
+                action = 'buy'
+                reason = f"RSI {rsi_val:.1f} 顯示超賣，有反彈機會"
+                confidence = 0.63
+            elif rsi_val > cfg_ind['rsi_overbought']:
+                action = 'sell'
+                reason = f"RSI {rsi_val:.1f} 超買，建議獲利了結"
+                confidence = 0.58
+            elif sma5 > sma20:
+                action = 'hold'
+                reason = '均線呈多頭排列，價格穩健，建議續抱'
+                confidence = 0.62
+            else:
+                action = 'hold'
+                reason = '價格持穩於均線附近，靜待明確訊號'
+                confidence = 0.52
+    
     return {
         'action': action,
         'reason': reason,
-        'confidence': round(confidence, 2)
+        'confidence': round(confidence, 2),
+        'signals': signals  # 記錄觸發的訊號組合
     }
 
 
@@ -298,11 +418,40 @@ def process_symbol(symbol: str, cfg, name_map=None):
     change = close_price - prev_close
     change_percent = (0 if prev_close == 0 else (change / prev_close * 100))
 
-    sma_s = sma(closes, cfg['indicators']['sma_short'])
-    sma_l = sma(closes, cfg['indicators']['sma_long'])
+    # 計算多種技術指標
+    sma5 = sma(closes, 5)
+    sma20 = sma(closes, 20)
+    sma200 = sma(closes, 200)
     rsi_v = rsi(closes, cfg['indicators']['rsi_period'])
+    macd_line, signal_line, histogram = macd(closes)
+    
+    # 成交量趨勢
+    volume_trend = 'neutral'
+    if len(volumes) >= 10:
+        recent_vol = [v for v in volumes[-5:] if v]
+        earlier_vol = [v for v in volumes[-10:-5] if v]
+        if recent_vol and earlier_vol:
+            avg_recent = sum(recent_vol) / len(recent_vol)
+            avg_earlier = sum(earlier_vol) / len(earlier_vol)
+            if avg_recent > avg_earlier * 1.2:
+                volume_trend = 'increasing'
+            elif avg_recent < avg_earlier * 0.8:
+                volume_trend = 'decreasing'
+    
+    # 背離偵測
+    rsi_values = []
+    for i in range(14, len(closes)):
+        r = rsi(closes[:i+1], 14)
+        if r:
+            rsi_values.append(r)
+    divergence = detect_divergence(closes, rsi_values) if len(rsi_values) > 20 else None
 
-    recommendation = recommend(sma_s, sma_l, rsi_v, cfg['indicators'])
+    recommendation = recommend(
+        sma5, sma20, sma200, rsi_v, 
+        macd_line, signal_line, histogram, 
+        volume_trend, divergence, 
+        cfg['indicators']
+    )
 
     # 友善名稱
     disp_name = None
