@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Header from './components/Header'
 import StockList from './components/StockList'
 
@@ -6,14 +6,42 @@ function App() {
   const [stockData, setStockData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const refreshTimer = useRef(null)
+
+  const isMarketOpenNow = () => {
+    try {
+      // 以台北時區判斷
+      const taipeiNow = new Date(
+        new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' })
+      )
+      const day = taipeiNow.getDay() // 0=Sun, 6=Sat
+      if (day === 0 || day === 6) return false
+      const hh = taipeiNow.getHours()
+      const mm = taipeiNow.getMinutes()
+      const minutes = hh * 60 + mm
+      // 交易時間（含緩衝）：08:45 ~ 13:35 台北時間
+      return minutes >= (8 * 60 + 45) && minutes <= (13 * 60 + 35)
+    } catch {
+      return false
+    }
+  }
 
   useEffect(() => {
     fetchStockData()
+    // 啟用每 30 秒自動更新（開盤期間）
+    refreshTimer.current = setInterval(() => {
+      if (isMarketOpenNow()) {
+        fetchStockData(true)
+      }
+    }, 30000)
+    return () => {
+      if (refreshTimer.current) clearInterval(refreshTimer.current)
+    }
   }, [])
 
-  const fetchStockData = async () => {
+  const fetchStockData = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       setError(null)
       
   // 讀取 data.json（加上 cache buster 避免快取）
@@ -75,7 +103,7 @@ function App() {
         ]
       })
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
