@@ -33,9 +33,9 @@ function StockDetailModal({ stock, onClose }) {
 
   const loadChartData = async () => {
     try {
-      // 使用 Yahoo Finance Chart API 取得歷史資料（改用 6 個月確保資料充足）
+      // 使用 Yahoo Finance Chart API 取得歷史資料（使用 1y 確保至少 6 個月資料）
       const symbol = stock.symbol
-      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=6mo`)
+      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=1y&interval=1d`)
       if (!response.ok) throw new Error('無法載入圖表資料')
       
       const data = await response.json()
@@ -59,9 +59,9 @@ function StockDetailModal({ stock, onClose }) {
 
   const loadBacktestData = async () => {
     try {
-      // 簡易回測：模擬過去 6 個月依照策略買賣的績效
+      // 簡易回測：模擬過去 6 個月依照策略買賣的績效（使用 1y 確保足夠資料）
       const symbol = stock.symbol
-      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=6mo`)
+      const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}&range=1y&interval=1d`)
       if (!response.ok) throw new Error('無法載入回測資料')
       
       const data = await response.json()
@@ -247,28 +247,42 @@ function StockDetailModal({ stock, onClose }) {
                 </div>
               </div>
 
-              {chartData && (
+              {chartData && (() => {
+                // 只取最近 6 個月的資料（約 126 個交易日）
+                const recentDays = 126
+                const startIdx = Math.max(0, chartData.dates.length - recentDays)
+                const recentDates = chartData.dates.slice(startIdx)
+                const recentCloses = chartData.closes.slice(startIdx)
+                const recentHighs = chartData.highs.slice(startIdx)
+                const recentLows = chartData.lows.slice(startIdx)
+                const recentVolumes = chartData.volumes.slice(startIdx)
+                
+                return (
                 <div className="chart-section">
-                  <h3>近六個月走勢</h3>
+                  <h3>近六個月走勢（最近 {recentDates.length} 個交易日）</h3>
                   <div className="chart-stats">
-                    <div>最高：${formatNumber(Math.max(...chartData.highs.filter(h => h)))}</div>
-                    <div>最低：${formatNumber(Math.min(...chartData.lows.filter(l => l)))}</div>
-                    <div>均量：{formatNumber(chartData.volumes.reduce((a,b) => a+(b||0), 0) / chartData.volumes.length)}</div>
+                    <div>最高：${formatNumber(Math.max(...recentHighs.filter(h => h)))}</div>
+                    <div>最低：${formatNumber(Math.min(...recentLows.filter(l => l)))}</div>
+                    <div>均量：{formatNumber(recentVolumes.reduce((a,b) => a+(b||0), 0) / recentVolumes.length)}</div>
                   </div>
                   
                   {/* 價格走勢圖 */}
                   <div style={{ marginTop: '20px' }}>
                     <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={chartData.dates.map((date, i) => ({
+                      <LineChart data={recentDates.map((date, i) => ({
                         date: date.slice(5), // 只顯示月/日
-                        價格: chartData.closes[i],
-                        'SMA(5)': i >= 4 ? chartData.closes.slice(i-4, i+1).reduce((a,b) => a+b, 0) / 5 : null,
-                        'SMA(20)': i >= 19 ? chartData.closes.slice(i-19, i+1).reduce((a,b) => a+b, 0) / 20 : null
+                        價格: recentCloses[i] ? Number(recentCloses[i].toFixed(2)) : null,
+                        'SMA(5)': i >= 4 ? Number((recentCloses.slice(i-4, i+1).reduce((a,b) => a+b, 0) / 5).toFixed(2)) : null,
+                        'SMA(20)': i >= 19 ? Number((recentCloses.slice(i-19, i+1).reduce((a,b) => a+b, 0) / 20).toFixed(2)) : null
                       })).filter(d => d.價格)}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
-                        <YAxis domain={['dataMin - 5', 'dataMax + 5']} tick={{ fontSize: 12 }} />
-                        <Tooltip />
+                        <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={Math.floor(recentDates.length / 10)} />
+                        <YAxis 
+                          domain={['dataMin - 5', 'dataMax + 5']} 
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => value.toFixed(2)}
+                        />
+                        <Tooltip formatter={(value) => value?.toFixed(2)} />
                         <Legend />
                         <Line type="monotone" dataKey="價格" stroke="#8884d8" strokeWidth={2} dot={false} />
                         <Line type="monotone" dataKey="SMA(5)" stroke="#82ca9d" strokeWidth={1.5} dot={false} />
@@ -281,12 +295,12 @@ function StockDetailModal({ stock, onClose }) {
                   <div style={{ marginTop: '20px' }}>
                     <h4 style={{ marginBottom: '10px', fontSize: '14px', color: '#666' }}>成交量</h4>
                     <ResponsiveContainer width="100%" height={150}>
-                      <BarChart data={chartData.dates.map((date, i) => ({
+                      <BarChart data={recentDates.map((date, i) => ({
                         date: date.slice(5),
-                        成交量: Math.round(chartData.volumes[i] / 1000) // 轉為千股
+                        成交量: Math.round(recentVolumes[i] / 1000) // 轉為千股
                       })).filter(d => d.成交量)}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tick={{ fontSize: 12 }} interval="preserveStartEnd" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12 }} interval={Math.floor(recentDates.length / 10)} />
                         <YAxis tick={{ fontSize: 12 }} />
                         <Tooltip formatter={(value) => `${formatNumber(value * 1000)} 股`} />
                         <Bar dataKey="成交量" fill="#8884d8" />
@@ -294,7 +308,8 @@ function StockDetailModal({ stock, onClose }) {
                     </ResponsiveContainer>
                   </div>
                 </div>
-              )}
+                )
+              })()}
             </div>
           )}
 
