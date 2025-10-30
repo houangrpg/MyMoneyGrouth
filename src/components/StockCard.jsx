@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { formatNumber, formatPercent } from '../utils/formatter'
 import { isWatched, toggleWatchlist, getHolding, updateHolding } from '../utils/storage'
 
-function StockCard({ stock, onUpdate }) {
+function StockCard({ stock, onUpdate, isLive = false }) {
   const { symbol, name, price, change, changePercent, volume, recommendation } = stock
   const { action, reason, confidence } = recommendation
 
@@ -59,7 +59,7 @@ function StockCard({ stock, onUpdate }) {
     <article className={`stock-card ${watched ? 'watched' : ''}`}>
       <div className="stock-header">
         <div className="stock-title">
-          <h2>{symbol}</h2>
+          <h2>{symbol} {isLive && <span className="live-badge">🔴 即時</span>}</h2>
           <h3>{name}</h3>
         </div>
         <div className="stock-actions">

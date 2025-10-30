@@ -603,6 +603,72 @@ body {
   }
 }
 
+/* 即時查詢相關樣式 */
+.live-search-prompt {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.live-search-prompt p {
+  margin-bottom: 1rem;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.btn-live-search {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+}
+
+.btn-live-search:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-live-search:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-text {
+  color: #ef4444;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.live-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background: #ef4444;
+  color: white;
+  border-radius: 12px;
+  margin-left: 0.5rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 /* 手機響應式 */
 @media (max-width: 639px) {
   .filters-row {
@@ -615,5 +681,14 @@ body {
 
   .summary-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .live-search-prompt {
+    padding: 1.5rem 1rem;
+  }
+  
+  .btn-live-search {
+    width: 100%;
+    padding: 1rem;
   }
 }
