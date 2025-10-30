@@ -8,12 +8,9 @@ export async function fetchLiveStock(symbol) {
       fullSymbol = `${fullSymbol}.TW`
     }
 
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${fullSymbol}?interval=1d&range=1mo`
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0'
-      }
-    })
+    // 使用我們自己的 API 代理（避免 CORS 問題）
+    const url = `/api/stock?symbol=${encodeURIComponent(fullSymbol)}`
+    const response = await fetch(url)
 
     if (!response.ok) {
       // 如果 .TW 失敗，嘗試 .TWO
