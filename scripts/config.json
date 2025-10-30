@@ -1,0 +1,41 @@
+{
+  "watchlist": [
+    "5478.TW",
+    "6547.TW",
+    "6580.TW",
+    "6885.TW",
+    "6580.TW",
+    "00981A.TW",
+    "0050.TW",
+    "0052.TW",
+    "2330.TW"
+  ],
+  "universe": {
+    "enabled": true,
+    "market": "TW",
+    "category": "tech",
+    "includeOTC": true,
+    "includeSectors": [
+      "電子工業",
+      "半導體業",
+      "電腦及週邊設備業",
+      "通信網路業",
+      "電子零組件業",
+      "光電業",
+      "電子通路業",
+      "資訊服務業",
+      "其他電子業"
+    ]
+  },
+  "indicators": {
+    "sma_short": 5,
+    "sma_long": 20,
+    "rsi_period": 14,
+    "rsi_oversold": 30,
+    "rsi_overbought": 70
+  },
+  "schedule": {
+    "timezone": "Asia/Taipei",
+    "updateTime": "08:00"
+  }
+}

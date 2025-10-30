@@ -1,0 +1,53 @@
+name: Update Stock Data
+
+on:
+  schedule:
+    # 每週一至五 00:00 UTC (= 08:00 UTC+8 台灣時間)
+    - cron: '0 0 * * 1-5'
+  workflow_dispatch:  # 允許手動觸發
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Fetch and generate stock data
+        run: |
+          python scripts/update_data.py
+      
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data.json history/
+          
+          # 檢查是否有變更
+          if git diff --staged --quiet; then
+            echo "📭 沒有資料變更，跳過 commit"
+          else
+            git commit -m "chore: update stock data $(date +'%Y-%m-%d %H:%M') [skip ci]"
+            git push
+            echo "✅ 資料已更新並推送"
+          fi
+      
+      - name: Notify on failure (Optional)
+        if: failure()
+        run: |
+          echo "❌ 資料更新失敗！"
+          # 可在此新增 Slack/Email 通知邏輯

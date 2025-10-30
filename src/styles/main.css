@@ -1,0 +1,328 @@
+/* 全域樣式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* 應用容器 */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 標題區 */
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.update-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.demo-badge {
+  background: #fbbf24;
+  color: #78350f;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.update-time {
+  color: #888;
+}
+
+/* 主內容區 */
+.container {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* 載入狀態 */
+.loading {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: white;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 1rem;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 錯誤橫幅 */
+.error-banner {
+  background: #fee;
+  border: 1px solid #fcc;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+/* 空狀態 */
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: white;
+  font-size: 1.25rem;
+}
+
+/* 股票列表 */
+.stock-list {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+
+/* 股票卡片 */
+.stock-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stock-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.stock-title h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.stock-title h3 {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
+/* 建議標籤 */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.badge-buy {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-hold {
+  background: #fef3c7;
+  color: #78350f;
+}
+
+.badge-sell {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* 價格區塊 */
+.stock-price {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.price-main {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.price-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.price-change {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.text-red {
+  color: #dc2626;
+}
+
+.text-green {
+  color: #16a34a;
+}
+
+.text-gray {
+  color: #6b7280;
+}
+
+.price-meta {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* 建議區塊 */
+.recommendation {
+  background: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.recommendation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.recommendation-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+.confidence {
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.recommendation-reason {
+  color: #4b5563;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* 頁尾 */
+.footer {
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 2rem 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  margin-top: auto;
+}
+
+.footer p {
+  margin: 0.5rem 0;
+}
+
+/* 響應式設計 */
+
+/* 平板 (≥ 640px) */
+@media (min-width: 640px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .stock-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 桌面 (≥ 1024px) */
+@media (min-width: 1024px) {
+  .header {
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    padding: 3rem 2rem;
+  }
+
+  .stock-list {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .stock-card {
+    padding: 2rem;
+  }
+}
+
+/* 大螢幕 (≥ 1440px) */
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1400px;
+  }
+}
+
+/* 手機小螢幕 (< 375px) */
+@media (max-width: 374px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .price-value {
+    font-size: 1.75rem;
+  }
+
+  .stock-card {
+    padding: 1rem;
+  }
+}
