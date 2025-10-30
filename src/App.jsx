@@ -1,12 +1,20 @@
 import { useState, useEffect, useRef } from 'react'
 import Header from './components/Header'
 import StockList from './components/StockList'
+import Filters from './components/Filters'
+import Pagination from './components/Pagination'
 
 function App() {
   const [stockData, setStockData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const refreshTimer = useRef(null)
+
+  // UI 過濾與分頁狀態
+  const [query, setQuery] = useState('')
+  const [actionFilter, setActionFilter] = useState('all') // all | buy | hold | sell
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(50)
 
   const isMarketOpenNow = () => {
     try {
@@ -129,7 +137,35 @@ function App() {
         )}
         
         {!loading && stockData && (
-          <StockList stocks={stockData.stocks} />
+          <>
+            <Filters
+              query={query}
+              setQuery={(v) => { setQuery(v); setPage(1) }}
+              actionFilter={actionFilter}
+              setActionFilter={(v) => { setActionFilter(v); setPage(1) }}
+              pageSize={pageSize}
+              setPageSize={(v) => { setPageSize(v); setPage(1) }}
+              onAnyChange={() => {}}
+            />
+            <StockList
+              stocks={stockData.stocks}
+              query={query}
+              actionFilter={actionFilter}
+              page={page}
+              pageSize={pageSize}
+            />
+            <Pagination
+              page={page}
+              setPage={setPage}
+              total={stockData.stocks.filter((s) => {
+                const q = (query || '').trim().toLowerCase()
+                const inQuery = !q || (String(s.symbol).toLowerCase().includes(q) || String(s.name || '').toLowerCase().includes(q))
+                const inAction = actionFilter === 'all' || s.recommendation?.action === actionFilter
+                return inQuery && inAction
+              }).length}
+              pageSize={pageSize}
+            />
+          </>
         )}
       </main>
       
