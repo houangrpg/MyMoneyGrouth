@@ -53,22 +53,39 @@ def _fetch_isin_table(str_mode: int) -> pd.DataFrame:
     return df
 
 
-def get_tw_tech_tickers(include_otc: bool = True, include_sectors=None) -> list:
+def get_tw_tech_tickers(include_otc: bool = True, include_sectors=None, include_etf: bool = False, etf_categories=None) -> list:
     """取得台股科技類（上市+上櫃）全部代碼，回傳 Yahoo Finance 代碼清單。
     include_sectors: 產業別白名單；預設涵蓋電子相關產業。
+    include_etf: 是否包含 ETF
+    etf_categories: ETF 類別關鍵字白名單
     """
     if include_sectors is None:
         include_sectors = [
             '電子工業', '半導體業', '電腦及週邊設備業', '通信網路業', '電子零組件業',
             '光電業', '電子通路業', '資訊服務業', '其他電子業'
         ]
+    if etf_categories is None:
+        etf_categories = ['科技', '半導體', '5G', '電動車', 'AI', '元宇宙']
 
     tickers = []
     try:
         # 上市
         df_listed = _fetch_isin_table(2)
-        df_listed = df_listed[df_listed['產業別'].isin(include_sectors)]
-        for val in df_listed['有價證券代號及名稱']:
+        
+        # ETF 處理
+        if include_etf:
+            df_etf = df_listed[df_listed['產業別'] == '受益證券']
+            for val in df_etf['有價證券代號及名稱']:
+                parts = str(val).split(maxsplit=1)
+                code = parts[0].strip()
+                name = parts[1].strip() if len(parts) > 1 else ''
+                # 用名稱過濾科技相關 ETF
+                if any(cat in name for cat in etf_categories):
+                    tickers.append(f"{code}.TW")
+        
+        # 一般股票處理
+        df_tech = df_listed[df_listed['產業別'].isin(include_sectors)]
+        for val in df_tech['有價證券代號及名稱']:
             parts = str(val).split()
             code = parts[0].strip()
             if code.isdigit():
@@ -77,8 +94,20 @@ def get_tw_tech_tickers(include_otc: bool = True, include_sectors=None) -> list:
         # 上櫃（可選）
         if include_otc:
             df_otc = _fetch_isin_table(4)
-            df_otc = df_otc[df_otc['產業別'].isin(include_sectors)]
-            for val in df_otc['有價證券代號及名稱']:
+            
+            # ETF 處理
+            if include_etf:
+                df_etf_otc = df_otc[df_otc['產業別'] == '受益證券']
+                for val in df_etf_otc['有價證券代號及名稱']:
+                    parts = str(val).split(maxsplit=1)
+                    code = parts[0].strip()
+                    name = parts[1].strip() if len(parts) > 1 else ''
+                    if any(cat in name for cat in etf_categories):
+                        tickers.append(f"{code}.TWO")
+            
+            # 一般股票處理
+            df_tech_otc = df_otc[df_otc['產業別'].isin(include_sectors)]
+            for val in df_tech_otc['有價證券代號及名稱']:
                 parts = str(val).split()
                 code = parts[0].strip()
                 if code.isdigit():
@@ -287,8 +316,15 @@ def main():
     if uni.get('enabled'):
         sectors = uni.get('includeSectors')
         include_otc = bool(uni.get('includeOTC', True))
-        print("🧭 使用 universe 設定，動態取得台股科技清單…")
-        dynamic_list = get_tw_tech_tickers(include_otc=include_otc, include_sectors=sectors)
+        include_etf = bool(uni.get('includeETF', False))
+        etf_cats = uni.get('etfCategories')
+        print(f"🧭 使用 universe 設定，動態取得台股{'科技股票+ETF' if include_etf else '科技股票'}清單…")
+        dynamic_list = get_tw_tech_tickers(
+            include_otc=include_otc,
+            include_sectors=sectors,
+            include_etf=include_etf,
+            etf_categories=etf_cats
+        )
         if dynamic_list:
             watchlist = dynamic_list
         else:

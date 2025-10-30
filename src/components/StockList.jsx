@@ -20,6 +20,8 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
 
   // 過濾條件
   const q = (query || '').trim().toLowerCase()
+  const hasQuery = !!q || (actionFilter && actionFilter !== 'all')
+  
   const byQuery = (s) => {
     if (!q) return true
     return (
@@ -35,8 +37,8 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
 
   // 排序：關注優先 > 建議類型（買>持>賣）> 漲跌幅 > 成交量
   const actionOrder = { buy: 1, hold: 2, sell: 3 }
-  const filtered = stocks.filter((s) => byQuery(s) && byAction(s))
-  const sorted = filtered.sort((a, b) => {
+  const allFiltered = stocks.filter((s) => byQuery(s) && byAction(s))
+  const allSorted = allFiltered.sort((a, b) => {
     // 優先：關注股票在前
     const aWatched = isWatched(a.symbol) ? 0 : 1
     const bWatched = isWatched(b.symbol) ? 0 : 1
@@ -50,8 +52,23 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
     return (b.volume ?? 0) - (a.volume ?? 0)
   })
 
+  // 智能顯示邏輯：無搜尋時僅顯示釘選股票 + 前5個建議買入
+  let sorted = allSorted
+  let displayMode = 'all' // 'all' or 'smart'
+  
+  if (!hasQuery) {
+    // 無搜尋/篩選：顯示釘選股票 + 前5個建議買入的股票
+    displayMode = 'smart'
+    const watchedStocks = allSorted.filter(s => isWatched(s.symbol))
+    const buyRecommendations = allSorted
+      .filter(s => !isWatched(s.symbol) && s.recommendation?.action === 'buy')
+      .slice(0, 5)
+    sorted = [...watchedStocks, ...buyRecommendations]
+  }
+
   // 分頁
   const total = sorted.length
+  const totalAll = stocks.length
   const start = (page - 1) * pageSize
   const end = start + pageSize
   const pageItems = sorted.slice(start, end)
@@ -63,7 +80,12 @@ function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
           <StockCard key={stock.symbol} stock={stock} onUpdate={handleCardUpdate} />
         ))}
       </div>
-      <div className="list-meta">顯示 {start + 1}-{Math.min(end, total)} / {total}</div>
+      <div className="list-meta">
+        {displayMode === 'smart' 
+          ? `顯示釘選股票 + 前5個建議買入（${total} 筆）| 總股票數：${totalAll}，使用搜尋查看更多`
+          : `顯示 ${start + 1}-${Math.min(end, total)} / ${total}`
+        }
+      </div>
     </>
   )
 }

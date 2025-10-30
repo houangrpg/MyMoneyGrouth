@@ -103,12 +103,12 @@ def fetch_isin_rows(mode: int) -> list:
     return rows
 
 
-def build_tw_tech_universe(include_otc=True, include_sectors=None) -> tuple:
+def build_tw_all_universe(include_otc=True, include_sectors=None, include_etf=False, include_all_sectors=False) -> tuple:
+    """抓取台股全市場股票與ETF
+    include_all_sectors: True時忽略 include_sectors，抓取所有產業
+    """
     if include_sectors is None:
-        include_sectors = [
-            '電子工業', '半導體業', '電腦及週邊設備業', '通信網路業', '電子零組件業',
-            '光電業', '電子通路業', '資訊服務業', '其他電子業'
-        ]
+        include_sectors = []
 
     tickers = []
     name_map = {}
@@ -116,28 +116,60 @@ def build_tw_tech_universe(include_otc=True, include_sectors=None) -> tuple:
         # 上市
         rows = fetch_isin_rows(2)
         for r in rows:
-            # r[0]=代號及名稱，如 "2330 台積電"
+            if len(r) < 5:
+                continue
+            # r[0]=代號及名稱，如 "2330 台積電" 或 "0050 元大台灣50"
             # r[4]=產業別
-            if len(r) >= 5 and r[4] in include_sectors:
-                code = r[0].split()[0]
-                cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
+            code = r[0].split()[0]
+            cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
+            
+            # ETF 處理
+            if include_etf and r[4] == '受益證券':
+                tickers.append(f"{code}.TW")
+                name_map[f"{code}.TW"] = cname
+                continue
+            
+            # 一般股票處理
+            if include_all_sectors:
+                # 抓取所有產業的股票（只要代號是數字）
                 if code.isdigit():
                     tickers.append(f"{code}.TW")
                     name_map[f"{code}.TW"] = cname
+            elif include_sectors and r[4] in include_sectors:
+                # 僅抓取指定產業
+                if code.isdigit():
+                    tickers.append(f"{code}.TW")
+                    name_map[f"{code}.TW"] = cname
+        
         # 上櫃
         if include_otc:
             rows = fetch_isin_rows(4)
             for r in rows:
-                if len(r) >= 5 and r[4] in include_sectors:
-                    code = r[0].split()[0]
-                    cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
+                if len(r) < 5:
+                    continue
+                code = r[0].split()[0]
+                cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
+                
+                # ETF 處理
+                if include_etf and r[4] == '受益證券':
+                    tickers.append(f"{code}.TWO")
+                    name_map[f"{code}.TWO"] = cname
+                    continue
+                
+                # 一般股票處理
+                if include_all_sectors:
                     if code.isdigit():
                         tickers.append(f"{code}.TWO")
                         name_map[f"{code}.TWO"] = cname
+                elif include_sectors and r[4] in include_sectors:
+                    if code.isdigit():
+                        tickers.append(f"{code}.TWO")
+                        name_map[f"{code}.TWO"] = cname
+        
         # 去重排序
         tickers = sorted(list(dict.fromkeys(tickers)))
     except Exception as e:
-        print(f"⚠️ 取得台股科技清單失敗：{e}")
+        print(f"⚠️ 取得台股清單失敗：{e}")
         tickers = []
     return tickers, name_map
 
@@ -271,9 +303,16 @@ def main():
     uni = cfg.get('universe', {}) or {}
     if uni.get('enabled'):
         include_otc = bool(uni.get('includeOTC', True))
+        include_etf = bool(uni.get('includeETF', False))
+        include_all_sectors = bool(uni.get('includeAllSectors', False))
         sectors = uni.get('includeSectors')
-        print("🧭 使用 universe 設定，動態取得台股科技清單…")
-        watchlist, name_map = build_tw_tech_universe(include_otc=include_otc, include_sectors=sectors)
+        print(f"🧭 使用 universe 設定，動態取得台股{'全市場股票+ETF' if include_all_sectors else '指定產業股票+ETF' if include_etf else '指定產業股票'}清單…")
+        watchlist, name_map = build_tw_all_universe(
+            include_otc=include_otc,
+            include_sectors=sectors,
+            include_etf=include_etf,
+            include_all_sectors=include_all_sectors
+        )
         if not watchlist:
             print("⚠️ 動態清單取得失敗，回退使用 watchlist 設定")
             watchlist = cfg.get('watchlist', [])
