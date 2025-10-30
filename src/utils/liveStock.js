@@ -5,11 +5,20 @@ let __namesMapPromise = null
 async function loadNamesMap() {
   if (__namesMap) return __namesMap
   if (!__namesMapPromise) {
-    __namesMapPromise = fetch('/names.json')
-      .then((res) => {
-        if (!res.ok) throw new Error('無法載入名稱映射')
-        return res.json()
-      })
+    const tryPrimary = async () => {
+      const res = await fetch('/names.json')
+      if (!res.ok) throw new Error('primary names.json not found')
+      return res.json()
+    }
+    const tryFallback = async () => {
+      // 退回抓 GitHub raw（常見為可跨網域）
+      const RAW = 'https://raw.githubusercontent.com/houangrpg/MyMoneyGrouth/main/public/names.json'
+      const res = await fetch(RAW, { cache: 'no-store' })
+      if (!res.ok) throw new Error('fallback raw github names.json not found')
+      return res.json()
+    }
+    __namesMapPromise = tryPrimary()
+      .catch(() => tryFallback())
       .then((json) => {
         __namesMap = json || {}
         return __namesMap

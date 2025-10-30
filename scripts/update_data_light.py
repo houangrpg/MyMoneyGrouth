@@ -103,6 +103,31 @@ def fetch_isin_rows(mode: int) -> list:
     return rows
 
 
+def is_allowed_security(code: str, row: list) -> bool:
+    """判斷是否為我們要收錄的代碼。
+    規則：
+    - 一般股票：4 碼純數字 (例：2330)
+    - ETF/ETN：純數字且以 '00' 或 '02' 開頭（允許 5~6 碼，如 0050、006201、0200x…）
+    - 其他（權證/牛熊/結構型等 03/04/05… 開頭或含字母）排除
+    - 若產業別欄位為『受益證券』，也允許（保險起見）
+    """
+    try:
+        industry = row[4] if len(row) > 4 else ''
+    except Exception:
+        industry = ''
+
+    if code.isdigit():
+        if len(code) == 4:
+            return True
+        if code.startswith('00') or code.startswith('02'):
+            # ETF/ETN 常見於 00xxx/006xxx/009xxx、ETN 多為 02xxx
+            return True
+        # 其他純數字但非上述規則，多半為權證等，排除
+        return industry == '受益證券'
+    # 非純數字（帶字母），排除
+    return False
+
+
 def build_tw_all_universe(include_otc=True, include_sectors=None, include_etf=False, include_all_sectors=False) -> tuple:
     """抓取台股全市場股票與ETF
     include_all_sectors: True時忽略 include_sectors，抓取所有產業
@@ -123,23 +148,23 @@ def build_tw_all_universe(include_otc=True, include_sectors=None, include_etf=Fa
             code = r[0].split()[0]
             cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
             
-            # ETF 處理
-            if include_etf and r[4] == '受益證券':
-                tickers.append(f"{code}.TW")
-                name_map[f"{code}.TW"] = cname
+            # ETF / 一般股票處理（加上代碼過濾）
+            if include_etf and r[4] == '受益證券' and is_allowed_security(code, r):
+                sym = f"{code}.TW"
+                tickers.append(sym)
+                name_map[sym] = cname
                 continue
-            
-            # 一般股票處理
+
             if include_all_sectors:
-                # 抓取所有產業的股票（只要代號是數字）
-                if code.isdigit():
-                    tickers.append(f"{code}.TW")
-                    name_map[f"{code}.TW"] = cname
+                if is_allowed_security(code, r):
+                    sym = f"{code}.TW"
+                    tickers.append(sym)
+                    name_map[sym] = cname
             elif include_sectors and r[4] in include_sectors:
-                # 僅抓取指定產業
-                if code.isdigit():
-                    tickers.append(f"{code}.TW")
-                    name_map[f"{code}.TW"] = cname
+                if is_allowed_security(code, r):
+                    sym = f"{code}.TW"
+                    tickers.append(sym)
+                    name_map[sym] = cname
         
         # 上櫃
         if include_otc:
@@ -150,21 +175,23 @@ def build_tw_all_universe(include_otc=True, include_sectors=None, include_etf=Fa
                 code = r[0].split()[0]
                 cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
                 
-                # ETF 處理
-                if include_etf and r[4] == '受益證券':
-                    tickers.append(f"{code}.TWO")
-                    name_map[f"{code}.TWO"] = cname
+                # ETF / 一般股票處理（加上代碼過濾）
+                if include_etf and r[4] == '受益證券' and is_allowed_security(code, r):
+                    sym = f"{code}.TWO"
+                    tickers.append(sym)
+                    name_map[sym] = cname
                     continue
-                
-                # 一般股票處理
+
                 if include_all_sectors:
-                    if code.isdigit():
-                        tickers.append(f"{code}.TWO")
-                        name_map[f"{code}.TWO"] = cname
+                    if is_allowed_security(code, r):
+                        sym = f"{code}.TWO"
+                        tickers.append(sym)
+                        name_map[sym] = cname
                 elif include_sectors and r[4] in include_sectors:
-                    if code.isdigit():
-                        tickers.append(f"{code}.TWO")
-                        name_map[f"{code}.TWO"] = cname
+                    if is_allowed_security(code, r):
+                        sym = f"{code}.TWO"
+                        tickers.append(sym)
+                        name_map[sym] = cname
         
         # 去重排序
         tickers = sorted(list(dict.fromkeys(tickers)))
@@ -319,7 +346,7 @@ def main():
             name_map = {}
     else:
         watchlist = cfg.get('watchlist', [])
-        # 嘗試建立全市場名稱映射，讓 watchlist 也能有名稱
+        # 嘗試建立全市場名稱映射，讓 watchlist 也能有名稱（加入代碼過濾）
         name_map = {}
         try:
             for mode, suffix in ((2, '.TW'), (4, '.TWO')):
@@ -328,7 +355,7 @@ def main():
                     if len(r) >= 1:
                         code = r[0].split()[0]
                         cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
-                        if code.isdigit():
+                        if is_allowed_security(code, r):
                             name_map[f"{code}{suffix}"] = cname
         except Exception:
             pass
@@ -369,7 +396,7 @@ def main():
         json.dump(output, f, ensure_ascii=False, indent=2)
     print(f"📅 已儲存歷史快照至 {HISTORY_DIR / (today + '.json')}")
 
-    # 產出全市場名稱映射（public/names.json），供前端即時查詢使用
+    # 產出全市場名稱映射（public/names.json），供前端即時查詢使用（加入代碼過濾，避免檔案過大）
     try:
         full_name_map = {}
         for mode, suffix in ((2, '.TW'), (4, '.TWO')):
@@ -380,14 +407,14 @@ def main():
                     if not parts:
                         continue
                     code = parts[0]
-                    if not code.isdigit():
-                        continue
                     cname = r[0].split(maxsplit=1)[1] if len(r[0].split(maxsplit=1)) > 1 else code
-                    full_name_map[f"{code}{suffix}"] = cname
+                    if is_allowed_security(code, r):
+                        full_name_map[f"{code}{suffix}"] = cname
         names_path = Path(__file__).parent.parent / 'public' / 'names.json'
         with open(names_path, 'w', encoding='utf-8') as nf:
             json.dump(full_name_map, nf, ensure_ascii=False)
-        print(f"📝 已輸出名稱映射至 {names_path}（{len(full_name_map)} 筆）")
+        size_kb = names_path.stat().st_size // 1024 if names_path.exists() else 0
+        print(f"📝 已輸出名稱映射至 {names_path}（{len(full_name_map)} 筆，約 {size_kb} KB）")
     except Exception as e:
         print(f"⚠️ 無法輸出名稱映射：{e}")
 
