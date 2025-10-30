@@ -3,6 +3,8 @@ import Header from './components/Header'
 import StockList from './components/StockList'
 import Filters from './components/Filters'
 import Pagination from './components/Pagination'
+import PortfolioSummary from './components/PortfolioSummary'
+import { getHoldings } from './utils/storage'
 
 function App() {
   const [stockData, setStockData] = useState(null)
@@ -15,6 +17,11 @@ function App() {
   const [actionFilter, setActionFilter] = useState('all') // all | buy | hold | sell
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
+  const [holdings, setHoldings] = useState(getHoldings())
+
+  const refreshHoldings = () => {
+    setHoldings(getHoldings())
+  }
 
   const isMarketOpenNow = () => {
     try {
@@ -138,6 +145,7 @@ function App() {
         
         {!loading && stockData && (
           <>
+            <PortfolioSummary stocks={stockData.stocks} holdings={holdings} />
             <Filters
               query={query}
               setQuery={(v) => { setQuery(v); setPage(1) }}
@@ -153,6 +161,7 @@ function App() {
               actionFilter={actionFilter}
               page={page}
               pageSize={pageSize}
+              onUpdate={refreshHoldings}
             />
             <Pagination
               page={page}

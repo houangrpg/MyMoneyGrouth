@@ -1,6 +1,15 @@
+import { useState } from 'react'
 import StockCard from './StockCard'
+import { isWatched } from '../utils/storage'
 
-function StockList({ stocks, query, actionFilter, page, pageSize }) {
+function StockList({ stocks, query, actionFilter, page, pageSize, onUpdate }) {
+  const [, setRefresh] = useState(0)
+
+  const handleCardUpdate = () => {
+    setRefresh((r) => r + 1)
+    if (onUpdate) onUpdate()
+  }
+
   if (!stocks || stocks.length === 0) {
     return (
       <div className="empty-state">
@@ -24,10 +33,15 @@ function StockList({ stocks, query, actionFilter, page, pageSize }) {
     return s.recommendation?.action === actionFilter
   }
 
-  // 排序：先依建議類型（買>持>賣），再依漲跌幅（由高到低）
+  // 排序：關注優先 > 建議類型（買>持>賣）> 漲跌幅 > 成交量
   const actionOrder = { buy: 1, hold: 2, sell: 3 }
   const filtered = stocks.filter((s) => byQuery(s) && byAction(s))
   const sorted = filtered.sort((a, b) => {
+    // 優先：關注股票在前
+    const aWatched = isWatched(a.symbol) ? 0 : 1
+    const bWatched = isWatched(b.symbol) ? 0 : 1
+    if (aWatched !== bWatched) return aWatched - bWatched
+
     const ao = actionOrder[a.recommendation?.action] || 9
     const bo = actionOrder[b.recommendation?.action] || 9
     if (ao !== bo) return ao - bo
@@ -46,7 +60,7 @@ function StockList({ stocks, query, actionFilter, page, pageSize }) {
     <>
       <div className="stock-list">
         {pageItems.map((stock) => (
-          <StockCard key={stock.symbol} stock={stock} />
+          <StockCard key={stock.symbol} stock={stock} onUpdate={handleCardUpdate} />
         ))}
       </div>
       <div className="list-meta">顯示 {start + 1}-{Math.min(end, total)} / {total}</div>
